@@ -1,7 +1,11 @@
 import React from "react";
 import styles from "../styles/Game.module.css";
 
-const InteractionPrompt: React.FC<{ onInteract: () => void }> = ({
+interface InteractionPromptProps {
+  onInteract: () => void;
+}
+
+const InteractionPrompt: React.FC<InteractionPromptProps> = ({
   onInteract,
 }) => (
   <div className={styles.interactionPrompt} onClick={onInteract}>

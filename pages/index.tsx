@@ -128,6 +128,13 @@ const Game = () => {
     }
   };
 
+  const handleBattleSelection = (direction: "up" | "down") => {
+    setBattleState((prevState) => ({
+      ...prevState,
+      selectedAction: direction === "up" ? "attack" : "flee",
+    }));
+  };
+
   const handleBattleAction = () => {
     if (
       !battleState.inBattle ||
@@ -152,6 +159,8 @@ const Game = () => {
           enemy: null,
           message: "モンスターを倒した！",
         }));
+        // 戦闘終了後、プレイヤーの状態を更新
+        setPlayerPosition((prevPosition) => ({ ...prevPosition }));
       } else {
         setBattleState((prevState) => ({
           ...prevState,
@@ -169,6 +178,8 @@ const Game = () => {
           enemy: null,
           message: "逃げ出した！",
         }));
+        // 戦闘終了後、プレイヤーの状態を更新
+        setPlayerPosition((prevPosition) => ({ ...prevPosition }));
       } else {
         setBattleState((prevState) => ({
           ...prevState,
@@ -180,13 +191,7 @@ const Game = () => {
     }
   };
 
-  const handleBattleSelection = (direction: "up" | "down") => {
-    setBattleState((prevState) => ({
-      ...prevState,
-      selectedAction: direction === "up" ? "attack" : "flee",
-    }));
-  };
-
+  // 敵のターン処理を修正
   const enemyTurn = () => {
     setBattleState((prevState) => {
       if (!prevState.inBattle || !prevState.enemy) return prevState;
@@ -198,10 +203,14 @@ const Game = () => {
       const newPlayerHp = Math.max(prevState.player.hp - damage, 0);
 
       if (newPlayerHp === 0) {
+        // プレイヤーが倒れた場合、戦闘を終了し初期位置に戻す
+        setPlayerPosition({ x: 5, y: 5 });
         return {
           ...prevState,
-          player: { ...prevState.player, hp: newPlayerHp },
-          message: "あなたは倒れた...",
+          inBattle: false,
+          player: { ...initialPlayer },
+          enemy: null,
+          message: "あなたは倒れた... 村に戻されました。",
         };
       } else {
         return {
@@ -213,6 +222,10 @@ const Game = () => {
       }
     });
   };
+
+  useEffect(() => {
+    checkNPCProximity();
+  }, [playerPosition]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -262,12 +275,6 @@ const Game = () => {
     battleState,
   ]);
 
-  useEffect(() => {
-    checkNPCProximity();
-  }, [playerPosition]);
-
-  
-
   return (
     <div
       className={styles.game}
@@ -280,7 +287,7 @@ const Game = () => {
       <Player position={playerPosition} />
       <NPCs npcs={currentMap.npcs} />
       {nearbyNPC && !currentDialogue && !battleState.inBattle && (
-        <InteractionPrompt />
+        <InteractionPrompt onInteract={handleInteraction} />
       )}
       {currentDialogue && !battleState.inBattle && (
         <DialogueBox
