@@ -100,6 +100,7 @@ const Game = () => {
       } else {
         setPlayerPosition({ x: newX, y: newY });
         checkRandomEncounter();
+        checkNPCProximity();
       }
     }
   };
@@ -186,6 +187,33 @@ const Game = () => {
     }));
   };
 
+  const enemyTurn = () => {
+    setBattleState((prevState) => {
+      if (!prevState.inBattle || !prevState.enemy) return prevState;
+
+      const damage = Math.max(
+        prevState.enemy.attack - prevState.player.defense,
+        0
+      );
+      const newPlayerHp = Math.max(prevState.player.hp - damage, 0);
+
+      if (newPlayerHp === 0) {
+        return {
+          ...prevState,
+          player: { ...prevState.player, hp: newPlayerHp },
+          message: "あなたは倒れた...",
+        };
+      } else {
+        return {
+          ...prevState,
+          player: { ...prevState.player, hp: newPlayerHp },
+          turn: "player",
+          message: `${damage}のダメージを受けた！`,
+        };
+      }
+    });
+  };
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (battleState.inBattle) {
@@ -234,32 +262,11 @@ const Game = () => {
     battleState,
   ]);
 
-  const enemyTurn = () => {
-    setBattleState((prevState) => {
-      if (!prevState.inBattle || !prevState.enemy) return prevState;
+  useEffect(() => {
+    checkNPCProximity();
+  }, [playerPosition]);
 
-      const damage = Math.max(
-        prevState.enemy.attack - prevState.player.defense,
-        0
-      );
-      const newPlayerHp = Math.max(prevState.player.hp - damage, 0);
-
-      if (newPlayerHp === 0) {
-        return {
-          ...prevState,
-          player: { ...prevState.player, hp: newPlayerHp },
-          message: "あなたは倒れた...",
-        };
-      } else {
-        return {
-          ...prevState,
-          player: { ...prevState.player, hp: newPlayerHp },
-          turn: "player",
-          message: `${damage}のダメージを受けた！`,
-        };
-      }
-    });
-  };
+  
 
   return (
     <div
